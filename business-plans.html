@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>商业方案管理 - 聚烯烃产业链含权贸易数字化服务平台</title>
+  <script src="https://cdn.jsdelivr.net/npm/vue@3.3.4/dist/vue.global.prod.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <style>
+    body {
+      font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+      background-color: #f0f4f8;
+    }
+    .navbar-custom {
+      background: linear-gradient(135deg, #1a365d 0%, #2c5282 100%);
+    }
+    .card-hover {
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .card-hover:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+    .btn-primary-custom {
+      background: linear-gradient(135deg, #2c5282 0%, #1a365d 100%);
+      border: none;
+    }
+    .btn-primary-custom:hover {
+      background: linear-gradient(135deg, #1a365d 0%, #2c5282 100%);
+    }
+    .btn-success-custom {
+      background: linear-gradient(135deg, #2f855a 0%, #276749 100%);
+      border: none;
+    }
+    .btn-success-custom:hover {
+      background: linear-gradient(135deg, #276749 0%, #2f855a 100%);
+    }
+    .btn-warning-custom {
+      background: linear-gradient(135deg, #d69e2e 0%, #b7791f 100%);
+      border: none;
+    }
+    .btn-warning-custom:hover {
+      background: linear-gradient(135deg, #b7791f 100%, #d69e2e 100%);
+    }
+    .btn-danger-custom {
+      background: linear-gradient(135deg, #c53030 0%, #9b2c2c 100%);
+      border: none;
+    }
+    .btn-danger-custom:hover {
+      background: linear-gradient(135deg, #9b2c2c 0%, #c53030 100%);
+    }
+    .edit-form {
+      background-color: #f8fafc;
+      border-radius: 12px;
+      padding: 20px;
+    }
+    .original-data {
+      background-color: #e0f2fe;
+      border-left: 4px solid #0ea5e9;
+      padding: 10px 15px;
+      margin-bottom: 15px;
+      border-radius: 0 8px 8px 0;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <nav class="navbar navbar-expand-lg navbar-custom">
+      <div class="container">
+        <a class="navbar-brand text-white font-bold" href="index.html">聚烯烃含权贸易平台</a>
+        <button class="navbar-toggler bg-white/20" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+          <span class="navbar-toggler-icon text-white"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav ms-auto">
+            <li class="nav-item"><a class="nav-link text-white" href="index.html">首页</a></li>
+            <li class="nav-item"><a class="nav-link text-white" href="index.html#price-query">价格查询</a></li>
+            <li class="nav-item"><a class="nav-link text-white" href="index.html#ai-assistant">AI助手</a></li>
+            <li class="nav-item"><a class="nav-link text-white" href="index.html#business-plan">提交方案</a></li>
+            <li class="nav-item"><a class="nav-link text-white active" href="business-plans.html">方案管理</a></li>
+            <li class="nav-item"><a class="nav-link text-white" href="index.html#about">关于我们</a></li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <div class="container py-8">
+      <h1 class="text-center mb-8 text-3xl font-bold text-gray-800">商业方案管理</h1>
+      
+      <!-- 方案列表 -->
+      <div class="card mb-6">
+        <div class="card-header bg-gray-50">
+          <h4 class="font-bold text-gray-800">已提交方案列表</h4>
+          <p class="text-sm text-gray-500 mt-1">共 {{ businessPlans.length }} 条记录</p>
+        </div>
+        <div class="card-body">
+          <div v-if="businessPlans.length === 0" class="text-center text-gray-500 py-12">
+            <div class="text-5xl mb-4">📋</div>
+            <p>暂无提交记录</p>
+            <a href="index.html#business-plan" class="btn btn-primary-custom mt-4">去提交方案</a>
+          </div>
+          
+          <div v-else class="table-responsive">
+            <table class="table table-striped">
+              <thead>
+                <tr>
+                  <th>方案名称</th>
+                  <th>联系人</th>
+                  <th>联系电话</th>
+                  <th>方案类型</th>
+                  <th>提交时间</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="plan in businessPlans" :key="plan.id">
+                  <td>{{ plan.name }}</td>
+                  <td>{{ plan.contact }}</td>
+                  <td>{{ plan.phone }}</td>
+                  <td>{{ plan.type }}</td>
+                  <td>{{ formatDate(plan.create_time) }}</td>
+                  <td>
+                    <button @click="editPlan(plan)" class="btn btn-warning-custom btn-sm me-2">修改</button>
+                    <button @click="deletePlan(plan.id)" class="btn btn-danger-custom btn-sm">删除</button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- 修改表单弹窗 -->
+      <div v-if="editingPlan" class="card card-hover">
+        <div class="card-header bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
+          <div class="d-flex justify-between items-center">
+            <h4 class="font-bold">修改方案</h4>
+            <button @click="cancelEdit" class="btn btn-light btn-sm">关闭</button>
+          </div>
+        </div>
+        <div class="card-body">
+          <!-- 原始数据展示 -->
+          <div class="original-data">
+            <div class="text-sm text-gray-600"><strong>原始数据：</strong></div>
+            <div class="text-sm">方案名称：{{ originalPlan.name }} | 联系人：{{ originalPlan.contact }} | 电话：{{ originalPlan.phone }}</div>
+          </div>
+
+          <!-- 修改表单 -->
+          <div class="edit-form">
+            <div class="row">
+              <div class="col-md-6 mb-4">
+                <label class="form-label font-bold">方案名称 <span class="text-danger">*</span></label>
+                <input v-model="editingPlan.name" type="text" class="form-control" required>
+              </div>
+              <div class="col-md-6 mb-4">
+                <label class="form-label font-bold">联系人 <span class="text-danger">*</span></label>
+                <input v-model="editingPlan.contact" type="text" class="form-control" required>
+              </div>
+              <div class="col-md-6 mb-4">
+                <label class="form-label font-bold">联系电话 <span class="text-danger">*</span></label>
+                <input v-model="editingPlan.phone" type="tel" class="form-control" required>
+              </div>
+              <div class="col-md-6 mb-4">
+                <label class="form-label font-bold">方案类型</label>
+                <select v-model="editingPlan.type" class="form-control">
+                  <option value="融资方案">融资方案</option>
+                  <option value="采购方案">采购方案</option>
+                  <option value="销售方案">销售方案</option>
+                  <option value="合作意向">合作意向</option>
+                  <option value="其他">其他</option>
+                </select>
+              </div>
+              <div class="col-md-12 mb-4">
+                <label class="form-label font-bold">方案描述</label>
+                <textarea v-model="editingPlan.description" class="form-control" rows="3"></textarea>
+              </div>
+            </div>
+
+            <!-- 操作按钮 -->
+            <div class="d-flex gap-3">
+              <button @click="saveEdit" :disabled="isSaving" class="btn btn-success-custom">
+                <span v-if="isSaving" class="spinner-border spinner-border-sm me-2"></span>
+                {{ isSaving ? '保存中...' : '保存修改' }}
+              </button>
+              <button @click="resetEdit" class="btn btn-warning-custom">撤销修改</button>
+              <button @click="cancelEdit" class="btn btn-secondary">取消</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="footer-custom py-8 mt-8">
+      <div class="container text-center text-white">
+        <p>©2026 聚烯烃产业链含权贸易数字化服务平台 版权所有</p>
+      </div>
+    </footer>
+  </div>
+
+  <script>
+    const { createApp, ref, reactive } = Vue
+    const API_BASE = '/api'
+
+    createApp({
+      setup() {
+        const businessPlans = ref([])
+        const editingPlan = ref(null)
+        const originalPlan = reactive({})
+        const isSaving = ref(false)
+
+        const fetchBusinessPlans = async () => {
+          try {
+            const response = await axios.get(`${API_BASE}/business-plan`)
+            businessPlans.value = response.data
+          } catch (error) {
+            console.error('获取方案列表失败:', error)
+          }
+        }
+
+        const formatDate = (dateStr) => {
+          if (!dateStr) return ''
+          const date = new Date(dateStr)
+          return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
+        }
+
+        const editPlan = (plan) => {
+          editingPlan.value = { ...plan }
+          Object.assign(originalPlan, plan)
+        }
+
+        const cancelEdit = () => {
+          editingPlan.value = null
+          originalPlan.name = ''
+          originalPlan.contact = ''
+          originalPlan.phone = ''
+        }
+
+        const resetEdit = () => {
+          if (editingPlan.value && originalPlan.id) {
+            editingPlan.value.name = originalPlan.name
+            editingPlan.value.contact = originalPlan.contact
+            editingPlan.value.phone = originalPlan.phone
+            editingPlan.value.type = originalPlan.type
+            editingPlan.value.description = originalPlan.description
+          }
+        }
+
+        const saveEdit = async () => {
+          if (!editingPlan.value) return
+          
+          isSaving.value = true
+          try {
+            await axios.put(`${API_BASE}/business-plan/${editingPlan.value.id}`, {
+              name: editingPlan.value.name,
+              contact: editingPlan.value.contact,
+              phone: editingPlan.value.phone,
+              type: editingPlan.value.type,
+              description: editingPlan.value.description
+            })
+            
+            await fetchBusinessPlans()
+            cancelEdit()
+            alert('修改成功！')
+          } catch (error) {
+            console.error('保存失败:', error)
+            alert('保存失败，请稍后重试')
+          } finally {
+            isSaving.value = false
+          }
+        }
+
+        const deletePlan = async (id) => {
+          if (!confirm('确定要删除这个方案吗？')) return
+          
+          try {
+            await axios.delete(`${API_BASE}/business-plan/${id}`)
+            businessPlans.value = businessPlans.value.filter(p => p.id !== id)
+            alert('删除成功！')
+          } catch (error) {
+            console.error('删除失败:', error)
+            alert('删除失败，请稍后重试')
+          }
+        }
+
+        fetchBusinessPlans()
+
+        return {
+          businessPlans,
+          editingPlan,
+          originalPlan,
+          isSaving,
+          fetchBusinessPlans,
+          formatDate,
+          editPlan,
+          cancelEdit,
+          resetEdit,
+          saveEdit,
+          deletePlan
+        }
+      }
+    }).mount('#app')
+  </script>
+</body>
+</html>

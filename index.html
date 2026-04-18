@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>聚烯烃产业链含权贸易数字化服务平台</title>
+  <script src="https://cdn.jsdelivr.net/npm/vue@3.3.4/dist/vue.global.prod.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <style>
+    body {
+      font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+      background-color: #f0f4f8;
+    }
+    .navbar-custom {
+      background: linear-gradient(135deg, #1a365d 0%, #2c5282 100%);
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    .banner-section {
+      background: linear-gradient(135deg, #1a365d 0%, #2c5282 50%, #153e75 100%);
+      color: white;
+      padding: 100px 0;
+      position: relative;
+      overflow: hidden;
+    }
+    .banner-section::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    }
+    .card-hover {
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .card-hover:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+    }
+    .btn-primary-custom {
+      background: linear-gradient(135deg, #2c5282 0%, #1a365d 100%);
+      border: none;
+      transition: all 0.3s ease;
+    }
+    .btn-primary-custom:hover {
+      background: linear-gradient(135deg, #1a365d 0%, #2c5282 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 5px 20px rgba(44, 82, 130, 0.4);
+    }
+    .price-card {
+      border-radius: 16px;
+      transition: all 0.3s ease;
+      border: none;
+    }
+    .price-card:hover {
+      transform: scale(1.03);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+    .footer-custom {
+      background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+      color: white;
+    }
+    .chat-bubble {
+      border-radius: 20px;
+      max-width: 85%;
+      padding: 12px 18px;
+    }
+    .chat-bubble.user {
+      background: linear-gradient(135deg, #2c5282 0%, #1a365d 100%);
+      color: white;
+      margin-left: auto;
+      border-bottom-right-radius: 5px;
+    }
+    .chat-bubble.ai {
+      background: #e2e8f0;
+      color: #2d3748;
+      border-bottom-left-radius: 5px;
+    }
+    .form-control:focus {
+      border-color: #2c5282;
+      box-shadow: 0 0 0 0.25rem rgba(44, 82, 130, 0.25);
+    }
+    .loading-spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 2px solid #e2e8f0;
+      border-top: 2px solid #2c5282;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .scroll-to-top {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      background: linear-gradient(135deg, #2c5282 0%, #1a365d 100%);
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 55px;
+      height: 55px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      opacity: 0;
+      transition: opacity 0.3s, transform 0.3s;
+      box-shadow: 0 4px 15px rgba(44, 82, 130, 0.4);
+    }
+    .scroll-to-top.visible {
+      opacity: 1;
+    }
+    .scroll-to-top:hover {
+      transform: scale(1.1);
+    }
+    .section-title {
+      position: relative;
+      display: inline-block;
+      padding-bottom: 15px;
+    }
+    .section-title::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 60px;
+      height: 4px;
+      background: linear-gradient(135deg, #2c5282 0%, #1a365d 100%);
+      border-radius: 2px;
+    }
+    .chart-container {
+      position: relative;
+      height: 300px;
+      width: 100%;
+    }
+    .upload-area {
+      border: 2px dashed #cbd5e0;
+      border-radius: 12px;
+      padding: 40px;
+      text-align: center;
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+    .upload-area:hover, .upload-area.dragover {
+      border-color: #2c5282;
+      background-color: #ebf8ff;
+    }
+    .upload-icon {
+      font-size: 48px;
+      color: #a0aec0;
+      margin-bottom: 15px;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <nav class="navbar navbar-expand-lg navbar-custom fixed-top">
+      <div class="container">
+        <a class="navbar-brand text-white font-bold fs-1" href="#home">聚烯烃含权贸易平台</a>
+        <button class="navbar-toggler bg-white/20" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+          <span class="navbar-toggler-icon text-white"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav ms-auto">
+            <li class="nav-item"><a class="nav-link text-white active" href="#home">首页</a></li>
+            <li class="nav-item"><a class="nav-link text-white" href="price-query.html">价格查询</a></li>
+            <li class="nav-item"><a class="nav-link text-white" href="ai-assistant.html">AI助手</a></li>
+            <li class="nav-item"><a class="nav-link text-white" href="#business-plan">提交方案</a></li>
+            <li class="nav-item"><a class="nav-link text-white" href="business-plans.html">方案管理</a></li>
+            <li class="nav-item"><a class="nav-link text-white" href="about.html">关于我们</a></li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <section id="home" class="banner-section">
+      <div class="container relative">
+        <div class="text-center">
+          <h1 class="display-3 mb-6 font-bold">稳链护航·聚烯烃产业链含权贸易数字化服务平台</h1>
+          <p class="lead mb-8 text-lg opacity-90">AI价格预警｜轻量化供应链金融｜数字化含权贸易</p>
+          <div class="row justify-content-center gap-4">
+            <a href="#price-query" class="btn btn-light btn-lg px-8 py-3 rounded-full font-semibold">立即查询价格</a>
+            <a href="#ai-assistant" class="btn btn-primary-custom btn-lg px-8 py-3 rounded-full font-semibold">AI智能助手</a>
+            <a href="#business-plan" class="btn btn-outline-light btn-lg px-8 py-3 rounded-full font-semibold">商业方案</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="py-16 bg-white">
+      <div class="container">
+        <h2 class="text-center mb-12 text-3xl font-bold text-gray-800 section-title">核心产品</h2>
+        <div class="row g-8">
+          <div class="col-md-4">
+            <div class="card card-hover p-8 h-full rounded-2xl bg-gradient-to-br from-blue-50 to-indigo-50">
+              <div class="text-5xl mb-4">📊</div>
+              <h3 class="text-xl font-bold mb-3 text-gray-800">AI价格波动预警工具</h3>
+              <p class="text-gray-600">现货+期货+宏观数据建模，识别风险拐点，提供锁价/囤货策略。</p>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="card card-hover p-8 h-full rounded-2xl bg-gradient-to-br from-green-50 to-emerald-50">
+              <div class="text-5xl mb-4">💰</div>
+              <h3 class="text-xl font-bold mb-3 text-gray-800">轻量化供应链金融风控评分卡</h3>
+              <p class="text-gray-600">无抵押授信，多维度量化评分，解决融资贵融资难。</p>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="card card-hover p-8 h-full rounded-2xl bg-gradient-to-br from-purple-50 to-violet-50">
+              <div class="text-5xl mb-4">📈</div>
+              <h3 class="text-xl font-bold mb-3 text-gray-800">数字化含权贸易管理平台</h3>
+              <p class="text-gray-600">一站式含权合约管理，智能对冲策略，降低贸易风险。</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="py-16">
+      <div class="container">
+        <h2 class="text-center mb-12 text-3xl font-bold text-gray-800 section-title">实时行情</h2>
+        <div class="row g-6">
+          <div class="col-lg-3 col-md-6">
+            <div class="card price-card p-6 text-center bg-gradient-to-br from-orange-50 to-amber-100">
+              <div class="text-sm text-gray-500 mb-2">原油现价</div>
+              <div class="text-3xl font-bold text-orange-600">$86.5</div>
+              <div class="text-sm text-gray-500">美元/桶</div>
+              <div class="mt-3 text-green-600 font-semibold">+1.2%</div>
+            </div>
+          </div>
+          <div class="col-lg-3 col-md-6">
+            <div class="card price-card p-6 text-center bg-gradient-to-br from-blue-50 to-indigo-100">
+              <div class="text-sm text-gray-500 mb-2">PP现货</div>
+              <div class="text-3xl font-bold text-blue-600">7620</div>
+              <div class="text-sm text-gray-500">元/吨</div>
+              <div class="mt-3 text-green-600 font-semibold">+0.4%</div>
+            </div>
+          </div>
+          <div class="col-lg-3 col-md-6">
+            <div class="card price-card p-6 text-center bg-gradient-to-br from-purple-50 to-violet-100">
+              <div class="text-sm text-gray-500 mb-2">PE现货</div>
+              <div class="text-3xl font-bold text-purple-600">7850</div>
+              <div class="text-sm text-gray-500">元/吨</div>
+              <div class="mt-3 text-red-600 font-semibold">-0.2%</div>
+            </div>
+          </div>
+          <div class="col-lg-3 col-md-6">
+            <div class="card price-card p-6 text-center bg-gradient-to-br from-pink-50 to-rose-100">
+              <div class="text-sm text-gray-500 mb-2">EVA现货</div>
+              <div class="text-3xl font-bold text-pink-600">8230</div>
+              <div class="text-sm text-gray-500">元/吨</div>
+              <div class="mt-3 text-green-600 font-semibold">+0.8%</div>
+            </div>
+          </div>
+        </div>
+        <div class="text-center mt-6">
+          <button @click="refreshPrices" class="btn btn-primary-custom px-8 py-3 rounded-full" :disabled="isRefreshing">
+            <span v-if="isRefreshing" class="loading-spinner me-2"></span>
+            {{ isRefreshing ? '刷新中...' : '刷新行情' }}
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section id="price-query" class="py-16 bg-white">
+      <div class="container">
+        <h2 class="text-center mb-12 text-3xl font-bold text-gray-800 section-title">价格查询中心</h2>
+        
+        <!-- 实时价格监测区域 -->
+        <div class="card rounded-2xl shadow-lg mb-8">
+          <div class="card-header bg-gradient-to-r from-green-600 to-emerald-600 text-white">
+            <div class="d-flex justify-between items-center">
+              <div>
+                <h4 class="font-bold">📊 实时价格监测</h4>
+                <p class="text-sm opacity-80">数据每10秒自动刷新</p>
+              </div>
+              <div class="d-flex align-items-center gap-2">
+                <span v-if="isRefreshing" class="spinner-border spinner-border-sm"></span>
+                <button @click="refreshPrices" class="btn btn-light btn-sm" :disabled="isRefreshing">
+                  手动刷新
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="card-body p-6">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div v-for="(item, key) in realtimePrices" :key="key" class="price-monitor-card">
+                <div class="text-sm text-gray-500 mb-1">{{ getProductName(key) }}</div>
+                <div class="text-xl font-bold text-gray-800">{{ item.price }}{{ item.unit }}</div>
+                <div :class="item.change >= 0 ? 'text-green-600' : 'text-red-600'" class="text-sm">
+                  {{ item.change >= 0 ? '+' : '' }}{{ item.change }}%
+                </div>
+              </div>
+            </div>
+            <div class="mt-4 text-center text-sm text-gray-500">
+              更新时间: {{ lastUpdateTime }}
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-lg-4">
+            <div class="card rounded-2xl shadow-lg">
+              <div class="card-header bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
+                <h4 class="font-bold">选择品类查询价格</h4>
+              </div>
+              <div class="card-body p-6">
+                <div class="mb-6">
+                  <label class="form-label font-bold text-gray-700 mb-2">品类选择</label>
+                  <select v-model="selectedProduct" class="form-control rounded-lg border-gray-200">
+                    <option value="PP">PP（聚丙烯）</option>
+                    <option value="PE">PE（聚乙烯）</option>
+                    <option value="原油">原油</option>
+                    <option value="EVA">EVA</option>
+                  </select>
+                </div>
+                <button @click="queryPrice" class="btn btn-primary-custom w-full py-3 rounded-lg font-semibold" :disabled="isQuerying">
+                  <span v-if="isQuerying" class="loading-spinner me-2"></span>
+                  {{ isQuerying ? '查询中...' : '立即查询' }}
+                </button>
+              </div>
+            </div>
+
+            <div v-if="queryResult" class="card rounded-2xl shadow-lg mt-6">
+              <div class="card-header bg-gray-50">
+                <h4 class="font-bold text-gray-800">{{ queryResult.title }}</h4>
+              </div>
+              <div class="card-body p-6">
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                  <div class="text-center p-4 bg-gray-50 rounded-lg">
+                    <div class="text-sm text-gray-500">当前价格</div>
+                    <div class="text-2xl font-bold text-primary">{{ queryResult.price }}</div>
+                    <div :class="queryResult.change.includes('+') ? 'text-green-600' : 'text-red-600'">{{ queryResult.change }}</div>
+                  </div>
+                  <div class="text-center p-4 bg-gray-50 rounded-lg">
+                    <div class="text-sm text-gray-500">预测周期</div>
+                    <div class="text-2xl font-bold text-primary">{{ queryResult.period }}</div>
+                  </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                  <div class="card p-3">
+                    <div class="text-sm text-gray-500">AI预测结论</div>
+                    <div :class="getPredictionClass(queryResult.prediction)" class="font-bold">{{ queryResult.prediction }}</div>
+                  </div>
+                  <div class="card p-3">
+                    <div class="text-sm text-gray-500">风险等级</div>
+                    <div :class="getRiskClass(queryResult.risk)" class="font-bold">{{ queryResult.risk }}</div>
+                  </div>
+                </div>
+                <div class="card p-4 bg-gradient-to-r from-blue-50 to-indigo-50">
+                  <div class="text-sm text-gray-500">操作建议</div>
+                  <div class="font-bold text-gray-800">{{ queryResult.suggestion }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-lg-8">
+            <div class="card rounded-2xl shadow-lg">
+              <div class="card-header bg-gray-50">
+                <h4 class="font-bold text-gray-800">{{ selectedProduct }}价格走势分析</h4>
+              </div>
+              <div class="card-body p-6">
+                <div class="chart-container">
+                  <canvas ref="priceChart"></canvas>
+                </div>
+                <div class="mt-6 grid grid-cols-4 gap-4">
+                  <div class="text-center p-3 bg-green-50 rounded-lg">
+                    <div class="text-sm text-gray-500">7日涨幅</div>
+                    <div class="text-lg font-bold text-green-600">{{ chartData.sevenDayChange }}%</div>
+                  </div>
+                  <div class="text-center p-3 bg-blue-50 rounded-lg">
+                    <div class="text-sm text-gray-500">30日均价</div>
+                    <div class="text-lg font-bold text-blue-600">{{ chartData.thirtyDayAvg }}</div>
+                  </div>
+                  <div class="text-center p-3 bg-purple-50 rounded-lg">
+                    <div class="text-sm text-gray-500">最高价格</div>
+                    <div class="text-lg font-bold text-purple-600">{{ chartData.highest }}</div>
+                  </div>
+                  <div class="text-center p-3 bg-orange-50 rounded-lg">
+                    <div class="text-sm text-gray-500">最低价格</div>
+                    <div class="text-lg font-bold text-orange-600">{{ chartData.lowest }}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="ai-assistant" class="py-16">
+      <div class="container">
+        <h2 class="text-center mb-12 text-3xl font-bold text-gray-800 section-title">AI智能助手</h2>
+        <div class="row justify-content-center">
+          <div class="col-lg-8">
+            <div class="card rounded-2xl shadow-lg">
+              <div class="card-header bg-gradient-to-r from-purple-600 to-indigo-600 text-white">
+                <h4 class="font-bold">聚烯烃产业链AI风控助手</h4>
+              </div>
+              <div class="card-body">
+                <div class="mb-4">
+                  <p class="text-sm text-gray-500">专业领域：价格走势预测、囤货采购策略、融资授信方案、含权贸易风控</p>
+                </div>
+                
+                <div class="mb-4">
+                  <div class="text-sm text-gray-500 mb-3">高频问答：</div>
+                  <div class="flex flex-wrap gap-2">
+                    <button v-for="question in faqQuestions" :key="question" @click="selectFaq(question)" class="btn btn-outline-primary btn-sm rounded-full px-4 py-2">{{ question }}</button>
+                  </div>
+                </div>
+
+                <div class="border border-gray-200 rounded-xl p-4 mb-4" style="min-height: 350px; max-height: 500px; overflow-y: auto;">
+                  <div v-for="(msg, index) in chatMessages" :key="index" :class="['chat-bubble', 'mb-4', msg.type]">
+                    {{ msg.content }}
+                  </div>
+                </div>
+
+                <div class="input-group">
+                  <input v-model="userInput" @keyup.enter="sendMessage" type="text" class="form-control rounded-l-xl" placeholder="请输入您的问题..." :disabled="isChatting">
+                  <button @click="sendMessage" class="btn btn-primary-custom rounded-r-xl px-6" :disabled="isChatting || !userInput.trim()">
+                    <span v-if="isChatting" class="loading-spinner"></span>
+                    <span v-else>发送</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="business-plan" class="py-16 bg-white">
+      <div class="container">
+        <h2 class="text-center mb-12 text-3xl font-bold text-gray-800 section-title">商业方案提交</h2>
+        <div class="row">
+          <div class="col-lg-6">
+            <div class="card rounded-2xl shadow-lg">
+              <div class="card-header bg-gradient-to-r from-green-600 to-emerald-600 text-white">
+                <h4 class="font-bold">上传商业方案</h4>
+              </div>
+              <div class="card-body p-6">
+                <form @submit.prevent="submitBusinessPlan">
+                  <div class="mb-4">
+                    <label class="form-label font-bold text-gray-700">方案名称 <span class="text-danger">*</span></label>
+                    <input v-model="businessPlanForm.name" type="text" class="form-control rounded-lg" placeholder="请输入方案名称" required>
+                  </div>
+                  <div class="mb-4">
+                    <label class="form-label font-bold text-gray-700">联系人 <span class="text-danger">*</span></label>
+                    <input v-model="businessPlanForm.contact" type="text" class="form-control rounded-lg" placeholder="请输入联系人姓名" required>
+                  </div>
+                  <div class="mb-4">
+                    <label class="form-label font-bold text-gray-700">联系电话 <span class="text-danger">*</span></label>
+                    <input v-model="businessPlanForm.phone" type="tel" class="form-control rounded-lg" placeholder="请输入联系电话" required>
+                  </div>
+                  <div class="mb-4">
+                    <label class="form-label font-bold text-gray-700">方案类型</label>
+                    <select v-model="businessPlanForm.type" class="form-control rounded-lg">
+                      <option value="融资方案">融资方案</option>
+                      <option value="采购方案">采购方案</option>
+                      <option value="销售方案">销售方案</option>
+                      <option value="合作意向">合作意向</option>
+                      <option value="其他">其他</option>
+                    </select>
+                  </div>
+                  <div class="mb-6">
+                    <label class="form-label font-bold text-gray-700">方案描述</label>
+                    <textarea v-model="businessPlanForm.description" class="form-control rounded-lg" rows="4" placeholder="请详细描述您的商业方案，包括需求背景、目标、预算等..."></textarea>
+                  </div>
+                  <button type="submit" :disabled="isSubmittingPlan" class="btn btn-primary-custom w-full py-3 rounded-lg font-semibold">
+                    <span v-if="isSubmittingPlan" class="loading-spinner me-2"></span>
+                    {{ isSubmittingPlan ? '提交中...' : '提交方案' }}
+                  </button>
+                </form>
+                
+                <div v-if="submitPlanSuccess" class="mt-4 p-4 bg-green-100 text-green-700 rounded-xl text-center">
+                  <p class="font-semibold">提交成功！我们已收到您的商业方案，将尽快与您联系。</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="about" class="py-16">
+      <div class="container">
+        <h2 class="text-center mb-12 text-3xl font-bold text-gray-800 section-title">关于我们</h2>
+        <div class="row justify-content-center">
+          <div class="col-lg-8 text-center">
+            <p class="text-lg text-gray-600 mb-8">聚烯烃产业链含权贸易数字化服务平台致力于为产业链企业提供智能化、数字化的贸易解决方案，助力企业应对价格波动风险，提升供应链金融服务效率。</p>
+            <div class="card p-8 rounded-2xl shadow-lg">
+              <h3 class="font-bold text-xl mb-6 text-gray-800">联系我们</h3>
+              <div class="grid grid-cols-2 gap-6">
+                <div class="text-left">
+                  <p class="text-gray-600"><strong>邮箱：</strong>wzum48@163.com</p>
+                </div>
+                <div class="text-left">
+                  <p class="text-gray-600"><strong>电话：</strong>400-888-8888</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer class="footer-custom py-10">
+      <div class="container text-center">
+        <p class="mb-4">©2026 聚烯烃产业链含权贸易数字化服务平台 版权所有</p>
+        <p class="text-sm text-gray-400">稳链护航 · 赋能产业</p>
+      </div>
+    </footer>
+
+    <button @click="scrollToTop" :class="['scroll-to-top', showScrollTop ? 'visible' : '']">
+      ↑
+    </button>
+  </div>
+
+  <script>
+    const { createApp, ref, onMounted, onUnmounted, nextTick } = Vue
+    const API_BASE = '/api'
+
+    createApp({
+      setup() {
+        const selectedProduct = ref('PP')
+        const queryResult = ref(null)
+        const isQuerying = ref(false)
+        
+        const userInput = ref('')
+        const chatMessages = ref([{ type: 'ai', content: '您好！我是聚烯烃产业链AI风控助手，请问有什么可以帮助您的？' }])
+        const isChatting = ref(false)
+        
+        const isRefreshing = ref(false)
+        const showScrollTop = ref(false)
+        
+        const realtimePrices = ref({
+          PP: { price: 7620, change: 0.4, unit: '元/吨' },
+          PE: { price: 7850, change: -0.2, unit: '元/吨' },
+          原油: { price: 86.5, change: 1.2, unit: '美元/桶' },
+          EVA: { price: 8230, change: 0.8, unit: '元/吨' }
+        })
+        const lastUpdateTime = ref('')
+        let priceUpdateInterval = null
+        
+        const faqQuestions = [
+          'PP未来会涨吗？',
+          '中小企业怎么融资？',
+          '什么时候适合囤货？',
+          '含权贸易是什么？',
+          '风控评分卡如何使用？',
+          'PE价格走势如何？',
+          '原油对聚烯烃影响？',
+          '什么是锁价策略？'
+        ]
+
+        const businessPlanForm = ref({
+          name: '',
+          contact: '',
+          phone: '',
+          type: '融资方案',
+          description: ''
+        })
+        const submitPlanSuccess = ref(false)
+        const isSubmittingPlan = ref(false)
+
+        const chartData = ref({
+          sevenDayChange: '+2.3',
+          thirtyDayAvg: '7580',
+          highest: '7750',
+          lowest: '7420'
+        })
+        const priceChart = ref(null)
+        let chartInstance = null
+
+        const generateChartData = () => {
+          const labels = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月']
+          const basePrice = {
+            PP: 7500,
+            PE: 7800,
+            原油: 85,
+            EVA: 8100
+          }[selectedProduct.value]
+          
+          const data = labels.map((_, i) => {
+            const trend = Math.sin(i * 0.5) * 300 + Math.random() * 100 - 50
+            return basePrice + trend
+          })
+          
+          return { labels, data }
+        }
+
+        const renderChart = () => {
+          nextTick(() => {
+            if (chartInstance) {
+              chartInstance.destroy()
+            }
+            
+            const ctx = priceChart.value.getContext('2d')
+            const { labels, data } = generateChartData()
+            
+            chartInstance = new Chart(ctx, {
+              type: 'line',
+              data: {
+                labels: labels,
+                datasets: [{
+                  label: `${selectedProduct.value}价格走势`,
+                  data: data,
+                  borderColor: '#2c5282',
+                  backgroundColor: 'rgba(44, 82, 130, 0.1)',
+                  fill: true,
+                  tension: 0.4,
+                  pointBackgroundColor: '#2c5282',
+                  pointBorderColor: '#fff',
+                  pointBorderWidth: 2,
+                  pointRadius: 4,
+                  pointHoverRadius: 6
+                }]
+              },
+              options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                  legend: {
+                    display: true,
+                    position: 'top'
+                  },
+                  tooltip: {
+                    mode: 'index',
+                    intersect: false,
+                    backgroundColor: 'rgba(0,0,0,0.8)',
+                    padding: 12,
+                    titleFont: { size: 14 },
+                    bodyFont: { size: 13 }
+                  }
+                },
+                scales: {
+                  y: {
+                    beginAtZero: false,
+                    grid: {
+                      color: 'rgba(0,0,0,0.05)'
+                    }
+                  },
+                  x: {
+                    grid: {
+                      display: false
+                    }
+                  }
+                },
+                interaction: {
+                  mode: 'nearest',
+                  axis: 'x',
+                  intersect: false
+                }
+              }
+            })
+          })
+        }
+
+        const queryPrice = async () => {
+          isQuerying.value = true
+          try {
+            const response = await axios.get(`${API_BASE}/price/${selectedProduct.value}`)
+            queryResult.value = response.data
+            
+            const chartStats = {
+              PP: { sevenDayChange: '+2.3', thirtyDayAvg: '7580', highest: '7750', lowest: '7420' },
+              PE: { sevenDayChange: '-1.2', thirtyDayAvg: '7820', highest: '7980', lowest: '7650' },
+              原油: { sevenDayChange: '+3.5', thirtyDayAvg: '84.2', highest: '88.5', lowest: '81.0' },
+              EVA: { sevenDayChange: '+1.8', thirtyDayAvg: '8150', highest: '8320', lowest: '8010' }
+            }
+            chartData.value = chartStats[selectedProduct.value]
+            
+            renderChart()
+          } catch (error) {
+            console.error('查询价格失败:', error)
+            const priceData = {
+              PP: { title: 'PP（聚丙烯）价格查询结果', price: '7620元/吨', change: '+0.4%', period: '3日/7日', prediction: '偏强震荡', risk: '中等', suggestion: '锁价10%-20%' },
+              PE: { title: 'PE（聚乙烯）价格查询结果', price: '7850元/吨', change: '-0.2%', period: '3日/7日', prediction: '震荡偏弱', risk: '中等偏高', suggestion: '观望为主' },
+              原油: { title: '原油价格查询结果', price: '86.5美元/桶', change: '+1.2%', period: '3日/7日', prediction: '高位波动', risk: '高', suggestion: '谨慎囤货' },
+              EVA: { title: 'EVA价格查询结果', price: '8230元/吨', change: '+0.8%', period: '3日/7日', prediction: '小幅上行', risk: '中等', suggestion: '适量囤货' }
+            }
+            queryResult.value = priceData[selectedProduct.value]
+            
+            const chartStats = {
+              PP: { sevenDayChange: '+2.3', thirtyDayAvg: '7580', highest: '7750', lowest: '7420' },
+              PE: { sevenDayChange: '-1.2', thirtyDayAvg: '7820', highest: '7980', lowest: '7650' },
+              原油: { sevenDayChange: '+3.5', thirtyDayAvg: '84.2', highest: '88.5', lowest: '81.0' },
+              EVA: { sevenDayChange: '+1.8', thirtyDayAvg: '8150', highest: '8320', lowest: '8010' }
+            }
+            chartData.value = chartStats[selectedProduct.value]
+            
+            renderChart()
+          } finally {
+            isQuerying.value = false
+          }
+        }
+
+        const refreshPrices = async () => {
+          isRefreshing.value = true
+          try {
+            const response = await axios.get(`${API_BASE}/price/realtime/all`)
+            realtimePrices.value = response.data.data
+            updateLastUpdateTime()
+          } catch (error) {
+            console.error('刷新价格失败:', error)
+          } finally {
+            isRefreshing.value = false
+          }
+        }
+
+        const updateLastUpdateTime = () => {
+          const now = new Date()
+          lastUpdateTime.value = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`
+        }
+
+        const getProductName = (key) => {
+          const names = {
+            PP: 'PP（聚丙烯）',
+            PE: 'PE（聚乙烯）',
+            原油: '原油',
+            EVA: 'EVA'
+          }
+          return names[key] || key
+        }
+
+        const getPredictionClass = (prediction) => {
+          if (prediction.includes('强') || prediction.includes('升')) return 'text-green-600'
+          if (prediction.includes('弱') || prediction.includes('跌')) return 'text-red-600'
+          return 'text-blue-600'
+        }
+
+        const getRiskClass = (risk) => {
+          if (risk === '低') return 'text-green-600'
+          if (risk === '高') return 'text-red-600'
+          return 'text-yellow-600'
+        }
+
+        const sendMessage = async () => {
+          if (!userInput.value.trim() || isChatting.value) return
+          
+          chatMessages.value.push({ type: 'user', content: userInput.value })
+          const question = userInput.value
+          userInput.value = ''
+          isChatting.value = true
+          
+          try {
+            const response = await axios.post(`${API_BASE}/ai/chat`, { question })
+            chatMessages.value.push({ type: 'ai', content: response.data.answer })
+          } catch (error) {
+            console.error('AI对话失败:', error)
+            const faqAnswers = {
+              'PP未来会涨吗？': '当前PP处于震荡偏强区间，未来7日预计小幅上行，风险中等，建议锁价10%-20%。',
+              '中小企业怎么融资？': '平台提供轻量化风控评分卡，无需抵押，以真实贸易数据授信，缓解融资难融资贵。',
+              '什么时候适合囤货？': '价格处于低位、AI预警拐点向上、风险等级低时，可适度囤货。',
+              '含权贸易是什么？': '结合期权工具的贸易模式，帮助企业锁定成本、对冲价格波动风险。',
+              '风控评分卡如何使用？': '输入经营数据、订单稳定性、回款情况等，自动生成信用评分，快速获得融资参考。',
+              'PE价格走势如何？': 'PE当前处于震荡偏弱格局，受原油成本支撑有限，短期以观望为主。',
+              '原油对聚烯烃影响？': '原油是聚烯烃主要原料，原油价格上涨会推高生产成本，对聚烯烃价格形成支撑。',
+              '什么是锁价策略？': '在价格低位时锁定采购成本，通过含权贸易工具规避后续价格上涨风险。'
+            }
+            const matchedFaq = Object.keys(faqAnswers).find(key => 
+              question.includes(key) || key.includes(question)
+            )
+            const answer = matchedFaq ? faqAnswers[matchedFaq] : '感谢您的提问！我们的专业团队正在处理您的问题，将尽快回复您。'
+            chatMessages.value.push({ type: 'ai', content: answer })
+          } finally {
+            isChatting.value = false
+          }
+        }
+
+        const selectFaq = (question) => {
+          userInput.value = question
+        }
+
+        const submitBusinessPlan = async () => {
+          isSubmittingPlan.value = true
+          
+          try {
+            await axios.post(`${API_BASE}/business-plan`, {
+              name: businessPlanForm.value.name,
+              contact: businessPlanForm.value.contact,
+              phone: businessPlanForm.value.phone,
+              type: businessPlanForm.value.type,
+              description: businessPlanForm.value.description
+            })
+            
+            submitPlanSuccess.value = true
+            businessPlanForm.value = {
+              name: '',
+              contact: '',
+              phone: '',
+              type: '融资方案',
+              description: ''
+            }
+            
+            setTimeout(() => {
+              submitPlanSuccess.value = false
+            }, 5000)
+          } catch (error) {
+            console.error('提交方案失败:', error)
+            alert('提交失败，请稍后重试')
+          } finally {
+            isSubmittingPlan.value = false
+          }
+        }
+
+        const scrollToTop = () => {
+          window.scrollTo({ top: 0, behavior: 'smooth' })
+        }
+
+        const handleScroll = () => {
+          showScrollTop.value = window.scrollY > 300
+        }
+
+        onMounted(() => {
+          renderChart()
+          window.addEventListener('scroll', handleScroll)
+          refreshPrices()
+          priceUpdateInterval = setInterval(refreshPrices, 10000)
+        })
+
+        onUnmounted(() => {
+          window.removeEventListener('scroll', handleScroll)
+          if (chartInstance) {
+            chartInstance.destroy()
+          }
+          if (priceUpdateInterval) {
+            clearInterval(priceUpdateInterval)
+          }
+        })
+
+        return {
+          selectedProduct,
+          queryResult,
+          isQuerying,
+          userInput,
+          chatMessages,
+          isChatting,
+          isRefreshing,
+          showScrollTop,
+          faqQuestions,
+          businessPlanForm,
+          submitPlanSuccess,
+          isSubmittingPlan,
+          chartData,
+          priceChart,
+          realtimePrices,
+          lastUpdateTime,
+          queryPrice,
+          refreshPrices,
+          getPredictionClass,
+          getRiskClass,
+          getProductName,
+          sendMessage,
+          selectFaq,
+          submitBusinessPlan,
+          scrollToTop
+        }
+      }
+    }).mount('#app')
+  </script>
+</body>
+</html>

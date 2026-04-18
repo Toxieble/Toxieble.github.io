@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>价格查询中心 - 聚烯烃产业链含权贸易数字化服务平台</title>
+  <script src="https://cdn.jsdelivr.net/npm/vue@3.3.4/dist/vue.global.prod.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <style>
+    body {
+      font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+      background-color: #f0f4f8;
+      min-height: 100vh;
+    }
+    .navbar-custom {
+      background: linear-gradient(135deg, #1a365d 0%, #2c5282 100%);
+    }
+    .section-header {
+      background: linear-gradient(135deg, #2c5282 0%, #1a365d 100%);
+      color: white;
+      padding: 60px 0;
+      text-align: center;
+    }
+    .card-hover {
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .card-hover:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+    .btn-primary-custom {
+      background: linear-gradient(135deg, #2c5282 0%, #1a365d 100%);
+      border: none;
+      transition: all 0.3s ease;
+    }
+    .btn-primary-custom:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 20px rgba(44, 82, 130, 0.4);
+    }
+    .chart-container {
+      position: relative;
+      height: 350px;
+      width: 100%;
+    }
+    .stats-card {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border-radius: 12px;
+      padding: 20px;
+    }
+    .stats-card.green {
+      background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    }
+    .stats-card.orange {
+      background: linear-gradient(135deg, #fc4a1a 0%, #f7b733 100%);
+    }
+    .stats-card.blue {
+      background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    }
+    .price-monitor-card {
+      background: white;
+      border-radius: 12px;
+      padding: 15px;
+      text-align: center;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+    .price-monitor-card:hover {
+      box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    }
+    .trend-up {
+      color: #10b981;
+    }
+    .trend-down {
+      color: #ef4444;
+    }
+    .scroll-to-top {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      width: 50px;
+      height: 50px;
+      background: linear-gradient(135deg, #2c5282 0%, #1a365d 100%);
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      opacity: 0;
+      transition: opacity 0.3s, transform 0.3s;
+      box-shadow: 0 4px 15px rgba(44, 82, 130, 0.4);
+      z-index: 1000;
+    }
+    .scroll-to-top.visible {
+      opacity: 1;
+    }
+    .scroll-to-top:hover {
+      transform: scale(1.1);
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <nav class="navbar navbar-expand-lg navbar-custom fixed-top">
+      <div class="container">
+        <a class="navbar-brand text-white font-bold" href="index.html">聚烯烃含权贸易平台</a>
+        <button class="navbar-toggler bg-white/20" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+          <span class="navbar-toggler-icon text-white"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav ms-auto">
+            <li class="nav-item"><a class="nav-link text-white" href="index.html">首页</a></li>
+            <li class="nav-item"><a class="nav-link text-white active" href="price-query.html">价格查询</a></li>
+            <li class="nav-item"><a class="nav-link text-white" href="ai-assistant.html">AI助手</a></li>
+            <li class="nav-item"><a class="nav-link text-white" href="index.html#business-plan">提交方案</a></li>
+            <li class="nav-item"><a class="nav-link text-white" href="business-plans.html">方案管理</a></li>
+            <li class="nav-item"><a class="nav-link text-white" href="about.html">关于我们</a></li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <div class="section-header">
+      <div class="container">
+        <h1 class="text-4xl font-bold mb-4">价格查询中心</h1>
+        <p class="text-lg opacity-90">实时监测聚烯烃产业链原料价格，AI智能分析预测走势</p>
+      </div>
+    </div>
+
+    <div class="container py-12">
+      <!-- 实时价格监测区域 -->
+      <div class="card rounded-2xl shadow-lg mb-8">
+        <div class="card-header bg-gradient-to-r from-green-600 to-emerald-600 text-white">
+          <div class="d-flex justify-between items-center">
+            <div>
+              <h4 class="font-bold text-lg">📊 实时价格监测</h4>
+              <p class="text-sm text-white/90 font-medium">数据每10秒自动刷新</p>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+              <span v-if="isRefreshing" class="spinner-border spinner-border-sm"></span>
+              <button @click="refreshPrices" class="btn btn-light btn-sm font-medium" :disabled="isRefreshing">
+                🔄 手动刷新
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="card-body p-6">
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div v-for="(item, key) in realtimePrices" :key="key" class="price-monitor-card cursor-pointer" @click="selectProduct(key)">
+              <div class="text-sm text-gray-500 mb-1">{{ getProductName(key) }}</div>
+              <div class="text-xl font-bold text-gray-800">{{ item.price }}{{ item.unit }}</div>
+              <div :class="item.change >= 0 ? 'trend-up' : 'trend-down'" class="text-sm">
+                {{ item.change >= 0 ? '↑ +' : '↓ ' }}{{ item.change }}%
+              </div>
+            </div>
+          </div>
+          <div class="mt-4 text-center text-sm text-gray-500">
+            更新时间: {{ lastUpdateTime }}
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <!-- 左侧查询区域 -->
+        <div class="col-lg-4">
+          <div class="card rounded-2xl shadow-lg p-6 card-hover">
+            <h3 class="text-xl font-bold text-gray-800 mb-6">🔍 产品查询</h3>
+            
+            <div class="mb-4">
+              <label class="form-label font-semibold text-gray-700">选择产品类型</label>
+              <select v-model="selectedProduct" class="form-select rounded-lg">
+                <option value="PP">PP（聚丙烯）</option>
+                <option value="PE">PE（聚乙烯）</option>
+                <option value="原油">原油</option>
+                <option value="EVA">EVA</option>
+              </select>
+            </div>
+
+            <button @click="queryPrice" :disabled="isQuerying" class="btn btn-primary-custom w-full py-3">
+              <span v-if="isQuerying" class="spinner-border spinner-border-sm me-2"></span>
+              {{ isQuerying ? '查询中...' : '查询价格' }}
+            </button>
+
+            <div v-if="queryResult" class="mt-6 p-4 bg-gray-50 rounded-xl">
+              <h4 class="font-bold text-gray-800 mb-3">{{ queryResult.title }}</h4>
+              <div class="text-3xl font-bold text-indigo-600 mb-2">{{ queryResult.price }}</div>
+              <div :class="queryResult.change.includes('+') ? 'text-green-600' : 'text-red-600'" class="text-lg font-semibold">
+                {{ queryResult.change }}
+              </div>
+              <div class="mt-3 pt-3 border-t border-gray-200">
+                <div class="mb-2">
+                  <span class="text-gray-500">预测：</span>
+                  <span :class="getPredictionClass(queryResult.prediction)" class="font-medium">{{ queryResult.prediction }}</span>
+                </div>
+                <div class="mb-2">
+                  <span class="text-gray-500">风险：</span>
+                  <span :class="getRiskClass(queryResult.risk)" class="font-medium">{{ queryResult.risk }}</span>
+                </div>
+                <div>
+                  <span class="text-gray-500">建议：</span>
+                  <span class="text-gray-700">{{ queryResult.suggestion }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 右侧图表区域 -->
+        <div class="col-lg-8">
+          <div class="card rounded-2xl shadow-lg p-6 card-hover">
+            <h3 class="text-xl font-bold text-gray-800 mb-4">📈 {{ getProductName(selectedProduct) }}价格走势</h3>
+            
+            <div class="chart-container">
+              <canvas ref="priceChart"></canvas>
+            </div>
+
+            <!-- 图表指标 -->
+            <div class="row mt-6">
+              <div class="col-md-3">
+                <div class="stats-card text-center">
+                  <div class="text-2xl font-bold">{{ chartStats.sevenDayChange }}%</div>
+                  <div class="text-sm opacity-80">7日涨幅</div>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="stats-card green text-center">
+                  <div class="text-2xl font-bold">{{ chartStats.thirtyDayAvg }}</div>
+                  <div class="text-sm opacity-80">30日均价</div>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="stats-card orange text-center">
+                  <div class="text-2xl font-bold">{{ chartStats.highest }}</div>
+                  <div class="text-sm opacity-80">周期最高</div>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="stats-card blue text-center">
+                  <div class="text-2xl font-bold">{{ chartStats.lowest }}</div>
+                  <div class="text-sm opacity-80">周期最低</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 技术指标 -->
+            <div class="mt-6 p-4 bg-gray-50 rounded-xl">
+              <h4 class="font-bold text-gray-800 mb-3">📊 技术分析指标</h4>
+              <div class="row">
+                <div class="col-md-4">
+                  <div class="d-flex justify-between items-center mb-2">
+                    <span class="text-gray-600">MA5</span>
+                    <span class="font-medium">{{ chartStats.ma5 }}</span>
+                  </div>
+                  <div class="d-flex justify-between items-center mb-2">
+                    <span class="text-gray-600">MA10</span>
+                    <span class="font-medium">{{ chartStats.ma10 }}</span>
+                  </div>
+                  <div class="d-flex justify-between items-center mb-2">
+                    <span class="text-gray-600">MA20</span>
+                    <span class="font-medium">{{ chartStats.ma20 }}</span>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="d-flex justify-between items-center mb-2">
+                    <span class="text-gray-600">MACD</span>
+                    <span :class="chartStats.macd >= 0 ? 'text-green-600' : 'text-red-600'" class="font-medium">
+                      {{ chartStats.macd >= 0 ? '+' : '' }}{{ chartStats.macd }}
+                    </span>
+                  </div>
+                  <div class="d-flex justify-between items-center mb-2">
+                    <span class="text-gray-600">RSI</span>
+                    <span :class="getRsiClass(chartStats.rsi)" class="font-medium">{{ chartStats.rsi }}</span>
+                  </div>
+                  <div class="d-flex justify-between items-center mb-2">
+                    <span class="text-gray-600">BOLL</span>
+                    <span class="font-medium">{{ chartStats.boll }}</span>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="d-flex justify-between items-center mb-2">
+                    <span class="text-gray-600">成交量</span>
+                    <span class="font-medium">{{ chartStats.volume }}</span>
+                  </div>
+                  <div class="d-flex justify-between items-center mb-2">
+                    <span class="text-gray-600">波动率</span>
+                    <span class="font-medium">{{ chartStats.volatility }}%</span>
+                  </div>
+                  <div class="d-flex justify-between items-center mb-2">
+                    <span class="text-gray-600">趋势</span>
+                    <span :class="chartStats.trend === '上升' ? 'text-green-600' : chartStats.trend === '下降' ? 'text-red-600' : 'text-gray-600'" class="font-medium">{{ chartStats.trend }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 价格对比分析 -->
+      <div class="card rounded-2xl shadow-lg mt-8 p-6">
+        <h3 class="text-xl font-bold text-gray-800 mb-6">📊 产品价格对比</h3>
+        <div class="chart-container">
+          <canvas ref="compareChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <footer class="bg-gray-900 text-white py-12">
+      <div class="container">
+        <div class="row">
+          <div class="col-md-4">
+            <h4 class="font-bold mb-4">聚烯烃含权贸易平台</h4>
+            <p class="text-gray-400">致力于为产业链企业提供智能化、数字化的贸易解决方案</p>
+          </div>
+          <div class="col-md-4">
+            <h4 class="font-bold mb-4">快速链接</h4>
+            <ul class="list-unstyled text-gray-400">
+              <li><a href="index.html" class="text-gray-400 hover:text-white">首页</a></li>
+              <li><a href="price-query.html" class="text-gray-400 hover:text-white">价格查询</a></li>
+              <li><a href="ai-assistant.html" class="text-gray-400 hover:text-white">AI助手</a></li>
+              <li><a href="about.html" class="text-gray-400 hover:text-white">关于我们</a></li>
+            </ul>
+          </div>
+          <div class="col-md-4">
+            <h4 class="font-bold mb-4">联系方式</h4>
+            <p class="text-gray-400">📱 微信：sa3527853890</p>
+            <p class="text-gray-400">👥 团队：小挑大创团队</p>
+          </div>
+        </div>
+        <div class="border-t border-gray-800 mt-8 pt-8 text-center text-gray-500">
+          <p>© 2024 聚烯烃产业链含权贸易数字化服务平台 | 小挑大创团队</p>
+        </div>
+      </div>
+    </footer>
+
+    <div @click="scrollToTop" :class="['scroll-to-top', { 'visible': showScrollTop }]">
+      ↑
+    </div>
+  </div>
+
+  <script>
+    const { createApp, ref, computed, onMounted, onUnmounted, nextTick } = Vue
+    const API_BASE = '/api'
+
+    createApp({
+      setup() {
+        const selectedProduct = ref('PP')
+        const queryResult = ref(null)
+        const isQuerying = ref(false)
+        const isRefreshing = ref(false)
+        const showScrollTop = ref(false)
+        const realtimePrices = ref({
+          PP: { price: 7620, change: 0.4, unit: '元/吨' },
+          PE: { price: 7850, change: -0.2, unit: '元/吨' },
+          原油: { price: 86.5, change: 1.2, unit: '美元/桶' },
+          EVA: { price: 8230, change: 0.8, unit: '元/吨' }
+        })
+        const lastUpdateTime = ref('')
+        const priceChart = ref(null)
+        const compareChart = ref(null)
+        let chartInstance = null
+        let compareChartInstance = null
+        let priceUpdateInterval = null
+
+        const chartStats = computed(() => {
+          const basePrice = realtimePrices.value[selectedProduct.value]?.price || 7620
+          return {
+            sevenDayChange: (Math.random() * 5 - 2).toFixed(2),
+            thirtyDayAvg: Math.round(basePrice * 0.98),
+            highest: Math.round(basePrice * 1.05),
+            lowest: Math.round(basePrice * 0.95),
+            ma5: Math.round(basePrice * 0.99),
+            ma10: Math.round(basePrice * 0.985),
+            ma20: Math.round(basePrice * 0.98),
+            macd: (Math.random() * 2 - 1).toFixed(2),
+            rsi: Math.floor(Math.random() * 40 + 30),
+            boll: `${Math.round(basePrice * 0.96)}-${Math.round(basePrice * 1.04)}`,
+            volume: `${(Math.random() * 50 + 100).toFixed(0)}万手`,
+            volatility: (Math.random() * 3 + 1).toFixed(2),
+            trend: Math.random() > 0.5 ? '上升' : Math.random() > 0.5 ? '下降' : '震荡'
+          }
+        })
+
+        const getProductName = (key) => {
+          const names = {
+            PP: 'PP（聚丙烯）',
+            PE: 'PE（聚乙烯）',
+            原油: '原油',
+            EVA: 'EVA'
+          }
+          return names[key] || key
+        }
+
+        const selectProduct = (product) => {
+          selectedProduct.value = product
+          renderChart()
+        }
+
+        const queryPrice = async () => {
+          isQuerying.value = true
+          try {
+            const response = await axios.get(`${API_BASE}/price/${selectedProduct.value}`)
+            queryResult.value = response.data
+            renderChart()
+          } catch (error) {
+            console.error('价格查询失败:', error)
+          } finally {
+            isQuerying.value = false
+          }
+        }
+
+        const refreshPrices = async () => {
+          isRefreshing.value = true
+          try {
+            const response = await axios.get(`${API_BASE}/price/realtime/all`)
+            realtimePrices.value = response.data.data
+            updateLastUpdateTime()
+            renderChart()
+          } catch (error) {
+            console.error('刷新价格失败:', error)
+          } finally {
+            isRefreshing.value = false
+          }
+        }
+
+        const updateLastUpdateTime = () => {
+          const now = new Date()
+          lastUpdateTime.value = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`
+        }
+
+        const renderChart = () => {
+          nextTick(() => {
+            if (chartInstance) {
+              chartInstance.destroy()
+            }
+            const ctx = priceChart.value.getContext('2d')
+            const labels = Array.from({ length: 30 }, (_, i) => `${String(i + 1).padStart(2, '0')}日`)
+            const basePrice = realtimePrices.value[selectedProduct.value]?.price || 7620
+            const data = labels.map((_, i) => {
+              const variation = Math.sin(i * 0.5) * 50 + (Math.random() - 0.5) * 30
+              return Math.round(basePrice + variation)
+            })
+
+            chartInstance = new Chart(ctx, {
+              type: 'line',
+              data: {
+                labels: labels,
+                datasets: [{
+                  label: `${getProductName(selectedProduct.value)}价格走势`,
+                  data: data,
+                  borderColor: '#2c5282',
+                  backgroundColor: 'rgba(44, 82, 130, 0.1)',
+                  fill: true,
+                  tension: 0.4,
+                  pointRadius: 0,
+                  pointHoverRadius: 6,
+                  pointHoverBackgroundColor: '#2c5282'
+                }, {
+                  label: 'MA5',
+                  data: calculateMA(data, 5),
+                  borderColor: '#10b981',
+                  borderDash: [5, 5],
+                  fill: false,
+                  tension: 0.4
+                }, {
+                  label: 'MA20',
+                  data: calculateMA(data, 20),
+                  borderColor: '#f59e0b',
+                  borderDash: [5, 5],
+                  fill: false,
+                  tension: 0.4
+                }]
+              },
+              options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                  intersect: false,
+                  mode: 'index'
+                },
+                plugins: {
+                  legend: {
+                    position: 'top',
+                    labels: {
+                      usePointStyle: true,
+                      padding: 20
+                    }
+                  },
+                  tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    padding: 12,
+                    titleFont: { size: 14 },
+                    bodyFont: { size: 13 },
+                    callbacks: {
+                      label: (context) => `${context.dataset.label}: ${context.parsed.y} 元/吨`
+                    }
+                  }
+                },
+                scales: {
+                  x: {
+                    grid: { display: false },
+                    ticks: { maxTicksLimit: 10 }
+                  },
+                  y: {
+                    grid: { color: 'rgba(0, 0, 0, 0.05)' },
+                    ticks: {
+                      callback: (value) => `${value}`
+                    }
+                  }
+                }
+              }
+            })
+
+            if (compareChartInstance) {
+              compareChartInstance.destroy()
+            }
+            const compareCtx = compareChart.value.getContext('2d')
+            const compareData = {
+              labels: labels.slice(-15),
+              datasets: [
+                {
+                  label: 'PP',
+                  data: generateProductData(7620, 15),
+                  borderColor: '#2c5282',
+                  backgroundColor: 'rgba(44, 82, 130, 0.1)',
+                  fill: false,
+                  tension: 0.4
+                },
+                {
+                  label: 'PE',
+                  data: generateProductData(7850, 15),
+                  borderColor: '#10b981',
+                  backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                  fill: false,
+                  tension: 0.4
+                },
+                {
+                  label: 'EVA',
+                  data: generateProductData(8230, 15),
+                  borderColor: '#f59e0b',
+                  backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                  fill: false,
+                  tension: 0.4
+                }
+              ]
+            }
+            compareChartInstance = new Chart(compareCtx, {
+              type: 'line',
+              data: compareData,
+              options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                  legend: { position: 'top' },
+                  tooltip: { mode: 'index', intersect: false }
+                },
+                scales: {
+                  x: { grid: { display: false } },
+                  y: { grid: { color: 'rgba(0, 0, 0, 0.05)' } }
+                }
+              }
+            })
+          })
+        }
+
+        const calculateMA = (data, period) => {
+          return data.map((_, i) => {
+            if (i < period - 1) return null
+            const sum = data.slice(i - period + 1, i + 1).reduce((a, b) => a + b, 0)
+            return Math.round(sum / period)
+          })
+        }
+
+        const generateProductData = (base, length) => {
+          return Array.from({ length }, (_, i) => {
+            const variation = Math.sin(i * 0.4) * 40 + (Math.random() - 0.5) * 25
+            return Math.round(base + variation)
+          })
+        }
+
+        const getPredictionClass = (prediction) => {
+          if (!prediction) return 'text-gray-600'
+          if (prediction.includes('上涨') || prediction.includes('上行')) return 'text-green-600'
+          if (prediction.includes('下跌') || prediction.includes('下行')) return 'text-red-600'
+          return 'text-gray-600'
+        }
+
+        const getRiskClass = (risk) => {
+          if (!risk) return 'text-gray-600'
+          if (risk.includes('低')) return 'text-green-600'
+          if (risk.includes('高')) return 'text-red-600'
+          return 'text-yellow-600'
+        }
+
+        const getRsiClass = (rsi) => {
+          if (rsi >= 70) return 'text-red-600'
+          if (rsi <= 30) return 'text-green-600'
+          return 'text-gray-600'
+        }
+
+        const handleScroll = () => {
+          showScrollTop.value = window.scrollY > 300
+        }
+
+        const scrollToTop = () => {
+          window.scrollTo({ top: 0, behavior: 'smooth' })
+        }
+
+        onMounted(() => {
+          renderChart()
+          refreshPrices()
+          window.addEventListener('scroll', handleScroll)
+          priceUpdateInterval = setInterval(refreshPrices, 10000)
+        })
+
+        onUnmounted(() => {
+          window.removeEventListener('scroll', handleScroll)
+          if (chartInstance) chartInstance.destroy()
+          if (compareChartInstance) compareChartInstance.destroy()
+          if (priceUpdateInterval) clearInterval(priceUpdateInterval)
+        })
+
+        return {
+          selectedProduct,
+          queryResult,
+          isQuerying,
+          isRefreshing,
+          showScrollTop,
+          realtimePrices,
+          lastUpdateTime,
+          priceChart,
+          compareChart,
+          chartStats,
+          getProductName,
+          selectProduct,
+          queryPrice,
+          refreshPrices,
+          getPredictionClass,
+          getRiskClass,
+          getRsiClass,
+          scrollToTop
+        }
+      }
+    }).mount('#app')
+  </script>
+</body>
+</html>
